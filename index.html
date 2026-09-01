@@ -6,14 +6,14 @@
     <title>Catbox Media Streamer & Downloader</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --surface-color: #1e293b;
-            --surface-hover: #334155;
-            --primary-color: #38bdf8;
-            --primary-hover: #0ea5e9;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
+            --bg-color: #0b0f19;
+            --surface-color: #131c2e;
+            --surface-hover: #1e293b;
+            --primary-color: #06b6d4;
+            --primary-hover: #22d3ee;
+            --text-main: #f1f5f9;
+            --text-muted: #64748b;
+            --border-color: #1e293b;
             --radius-lg: 24px;
             --radius-md: 16px;
             --radius-sm: 8px;
@@ -40,11 +40,11 @@
 
         .app-container {
             width: 100%;
-            max-width: 900px;
+            max-width: 950px;
             background-color: var(--surface-color);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -79,11 +79,11 @@
 
         .status-badge {
             font-size: 0.75rem;
-            padding: 4px 12px;
+            padding: 6px 14px;
             border-radius: 9999px;
-            background: rgba(56, 189, 248, 0.1);
+            background: rgba(6, 182, 212, 0.1);
             color: var(--primary-color);
-            border: 1px solid rgba(56, 189, 248, 0.2);
+            border: 1px solid rgba(6, 182, 212, 0.2);
             font-weight: 500;
         }
 
@@ -92,7 +92,7 @@
             display: flex;
             flex-direction: column;
             gap: 24px;
-            min-height: 400px;
+            min-height: 420px;
             justify-content: center;
             align-items: center;
         }
@@ -148,25 +148,33 @@
             justify-content: center;
             align-items: center;
             position: relative;
+            border: 1px solid var(--border-color);
         }
 
         .media-container img,
         .media-container video,
-        .media-container audio {
+        .media-container audio,
+        .media-container iframe {
             max-width: 100%;
             max-height: 600px;
+            width: 100%;
+            height: 100%;
+            min-height: 450px;
             display: block;
             outline: none;
+            border: none;
+            background: #ffffff;
         }
 
         .media-container audio {
-            width: 100%;
+            min-height: auto;
             padding: 20px;
+            background: #000;
         }
 
         .custom-player {
             width: 100%;
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(19, 28, 46, 0.9);
             backdrop-filter: blur(12px);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
@@ -258,7 +266,7 @@
 
         .btn {
             background: var(--primary-color);
-            color: #0f172a;
+            color: #0b0f19;
             border: none;
             padding: 12px 24px;
             border-radius: var(--radius-sm);
@@ -270,13 +278,13 @@
             gap: 8px;
             text-decoration: none;
             transition: var(--transition-smooth);
-            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
         }
 
         .btn:hover {
             background: var(--primary-hover);
             transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(56, 189, 248, 0.3);
+            box-shadow: 0 6px 16px rgba(6, 182, 212, 0.3);
         }
 
         .btn svg {
@@ -287,7 +295,7 @@
 
         .help-box {
             text-align: center;
-            max-width: 450px;
+            max-width: 480px;
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -332,15 +340,15 @@
             <div id="welcomeView" class="state-view">
                 <div class="help-box">
                     <h2>Welcome to Catbox Streamer</h2>
-                    <p>To view or download a file, append the Catbox file ID to the URL parameter.</p>
-                    <div class="code-snippet">?id=YOUR_FILE_ID</div>
-                    <p style="font-size: 0.85rem; color: var(--text-muted);">Optional download flag: &amp;mode=dl</p>
+                    <p>To view, stream, or download a file, append the Catbox file ID to the URL parameter.</p>
+                    <div class="code-snippet">?id=YOUR_FILE_ID.ext</div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Direct download flag: &amp;mode=dl</p>
                 </div>
             </div>
 
             <div id="loadingView" class="state-view hidden">
                 <div class="spinner"></div>
-                <p id="loadingText" style="color: var(--text-muted);">Preparing file from Catbox...</p>
+                <p id="loadingText" style="color: var(--text-muted);">Processing file through Catbox proxy...</p>
             </div>
 
             <div id="errorView" class="state-view hidden">
@@ -348,7 +356,7 @@
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
                 <h2 id="errorTitle">Failed to Load</h2>
-                <p id="errorMessage" style="color: var(--text-muted);">Could not retrieve the requested file. Please check if the ID is correct or exists.</p>
+                <p id="errorMessage" style="color: var(--text-muted);">Could not retrieve the requested file. Please check if the ID is valid.</p>
             </div>
 
             <div id="mediaView" class="state-view hidden media-stage">
@@ -445,17 +453,19 @@
             }
 
             switchView('loading');
-            statusBadge.textContent = 'Loading...';
-            loadingText.textContent = `Resolving ID: ${fileId}...`;
+            statusBadge.textContent = 'Processing...';
+            loadingText.textContent = `Target ID: ${fileId}`;
 
             const targetUrl = `https://files.catbox.moe/${fileId}`;
-            downloadBtn.href = targetUrl;
+            const proxyDownloadUrl = `https://corsproxy.io/?` + encodeURIComponent(targetUrl);
+            
+            downloadBtn.href = proxyDownloadUrl;
             downloadBtn.download = fileId;
 
             if (mode === 'dl') {
                 statusBadge.textContent = 'Downloading...';
                 const a = document.createElement('a');
-                a.href = targetUrl;
+                a.href = proxyDownloadUrl;
                 a.download = fileId;
                 a.style.display = 'none';
                 document.body.appendChild(a);
@@ -463,77 +473,64 @@
                 document.body.removeChild(a);
             }
 
-            try {
-                let blobUrl = targetUrl;
-                let detectedType = '';
-
-                try {
-                    const response = await fetch(targetUrl, { method: 'HEAD' });
-                    if (response.ok) {
-                        detectedType = response.headers.get('content-type') || '';
-                    }
-                } catch (e) {
-                    const ext = fileId.split('.').pop().toLowerCase();
-                    if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif'].includes(ext)) detectedType = 'image/';
-                    if (['mp4', 'webm', 'mov', 'm4v'].includes(ext)) detectedType = 'video/';
-                    if (['mp3', 'wav', 'ogg', 'm4a', 'flac'].includes(ext)) detectedType = 'audio/';
-                }
-
-                const ext = fileId.split('.').pop().toLowerCase();
-                renderMedia(targetUrl, detectedType, ext);
-                switchView('media');
-                statusBadge.textContent = 'Ready';
-
-            } catch (err) {
-                console.error(err);
-                switchView('error');
-                errorMessage.textContent = 'Failed to load the resource. Verify if the file ID exists on Catbox.';
-                statusBadge.textContent = 'Error';
-            }
+            const ext = fileId.split('.').pop().toLowerCase();
+            renderMedia(targetUrl, ext);
+            switchView('media');
+            statusBadge.textContent = 'Ready';
         }
 
-        function renderMedia(mediaUrl, mimeType, ext) {
+        function renderMedia(mediaUrl, ext) {
             mediaContainer.innerHTML = '';
 
-            const isImage = mimeType.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif'].includes(ext);
-            const isVideo = mimeType.startsWith('video/') || ['mp4', 'webm', 'mov', 'm4v'].includes(ext);
-            const isAudio = mimeType.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'm4a', 'flac'].includes(ext);
+            const imageExts = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg', 'bmp'];
+            const videoExts = ['mp4', 'webm', 'mov', 'm4v', 'ogv'];
+            const audioExts = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'];
+            const documentExts = ['html', 'htm', 'txt', 'md', 'pdf'];
 
-            if (isImage) {
+            if (imageExts.includes(ext)) {
                 const img = document.createElement('img');
                 img.src = mediaUrl;
                 img.onerror = () => {
                     switchView('error');
-                    errorMessage.textContent = 'Image failed to render. File may not exist.';
+                    errorMessage.textContent = 'Failed to load image from Catbox.';
                 };
                 mediaContainer.appendChild(img);
                 customPlayerWrapper.classList.add('hidden');
-            } else if (isVideo) {
+            } else if (videoExts.includes(ext)) {
                 const video = document.createElement('video');
                 video.src = mediaUrl;
                 video.playsInline = true;
                 video.onerror = () => {
                     switchView('error');
-                    errorMessage.textContent = 'Video failed to load.';
+                    errorMessage.textContent = 'Failed to load video stream.';
                 };
                 mediaContainer.appendChild(video);
                 customPlayerWrapper.classList.remove('hidden');
                 setupCustomPlayer(video);
-            } else if (isAudio) {
+            } else if (audioExts.includes(ext)) {
                 const audio = document.createElement('audio');
                 audio.src = mediaUrl;
                 audio.onerror = () => {
                     switchView('error');
-                    errorMessage.textContent = 'Audio failed to load.';
+                    errorMessage.textContent = 'Failed to load audio stream.';
                 };
                 mediaContainer.appendChild(audio);
                 customPlayerWrapper.classList.remove('hidden');
                 setupCustomPlayer(audio);
+            } else if (documentExts.includes(ext)) {
+                const iframe = document.createElement('iframe');
+                iframe.src = mediaUrl;
+                iframe.onerror = () => {
+                    switchView('error');
+                    errorMessage.textContent = 'Failed to embed document content.';
+                };
+                mediaContainer.appendChild(iframe);
+                customPlayerWrapper.classList.add('hidden');
             } else {
                 const fallbackDiv = document.createElement('div');
                 fallbackDiv.style.padding = '40px';
                 fallbackDiv.style.textAlign = 'center';
-                fallbackDiv.innerHTML = `<p style="margin-bottom: 12px; color: var(--text-muted);">Preview not available for this file format. You can download it directly.</p>`;
+                fallbackDiv.innerHTML = `<p style="margin-bottom: 16px; color: var(--text-muted);">Preview is not supported for format: .${ext}</p>`;
                 mediaContainer.appendChild(fallbackDiv);
                 customPlayerWrapper.classList.add('hidden');
             }
