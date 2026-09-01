@@ -340,7 +340,7 @@
 
             <div id="loadingView" class="state-view hidden">
                 <div class="spinner"></div>
-                <p id="loadingText" style="color: var(--text-muted);">Fetching file from Catbox...</p>
+                <p id="loadingText" style="color: var(--text-muted);">Preparing file from Catbox...</p>
             </div>
 
             <div id="errorView" class="state-view hidden">
@@ -348,7 +348,7 @@
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
                 <h2 id="errorTitle">Failed to Load</h2>
-                <p id="errorMessage" style="color: var(--text-muted);">Could not retrieve the requested file.</p>
+                <p id="errorMessage" style="color: var(--text-muted);">Could not retrieve the requested file. Please check if the ID is correct or exists.</p>
             </div>
 
             <div id="mediaView" class="state-view hidden media-stage">
@@ -445,62 +445,87 @@
             }
 
             switchView('loading');
-            statusBadge.textContent = 'Fetching...';
-            loadingText.textContent = `Fetching ID: ${fileId} from Catbox...`;
+            statusBadge.textContent = 'Loading...';
+            loadingText.textContent = `Resolving ID: ${fileId}...`;
 
             const targetUrl = `https://files.catbox.moe/${fileId}`;
+            downloadBtn.href = targetUrl;
+            downloadBtn.download = fileId;
+
+            if (mode === 'dl') {
+                statusBadge.textContent = 'Downloading...';
+                const a = document.createElement('a');
+                a.href = targetUrl;
+                a.download = fileId;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
 
             try {
-                const response = await fetch(targetUrl);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                const blob = await response.blob();
-                const blobUrl = URL.createObjectURL(blob);
+                let blobUrl = targetUrl;
+                let detectedType = '';
 
-                downloadBtn.href = blobUrl;
-                downloadBtn.download = fileId;
-
-                if (mode === 'dl') {
-                    statusBadge.textContent = 'Downloading...';
-                    const a = document.createElement('a');
-                    a.href = blobUrl;
-                    a.download = fileId;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                try {
+                    const response = await fetch(targetUrl, { method: 'HEAD' });
+                    if (response.ok) {
+                        detectedType = response.headers.get('content-type') || '';
+                    }
+                } catch (e) {
+                    const ext = fileId.split('.').pop().toLowerCase();
+                    if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif'].includes(ext)) detectedType = 'image/';
+                    if (['mp4', 'webm', 'mov', 'm4v'].includes(ext)) detectedType = 'video/';
+                    if (['mp3', 'wav', 'ogg', 'm4a', 'flac'].includes(ext)) detectedType = 'audio/';
                 }
 
-                renderMedia(blob, blobUrl);
+                const ext = fileId.split('.').pop().toLowerCase();
+                renderMedia(targetUrl, detectedType, ext);
                 switchView('media');
-                statusBadge.textContent = 'Loaded Successfully';
+                statusBadge.textContent = 'Ready';
 
             } catch (err) {
                 console.error(err);
                 switchView('error');
-                errorMessage.textContent = err.message || 'Failed to retrieve the file from Catbox servers.';
+                errorMessage.textContent = 'Failed to load the resource. Verify if the file ID exists on Catbox.';
                 statusBadge.textContent = 'Error';
             }
         }
 
-        function renderMedia(blob, blobUrl) {
+        function renderMedia(mediaUrl, mimeType, ext) {
             mediaContainer.innerHTML = '';
-            const mimeType = blob.type;
 
-            if (mimeType.startsWith('image/')) {
+            const isImage = mimeType.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif'].includes(ext);
+            const isVideo = mimeType.startsWith('video/') || ['mp4', 'webm', 'mov', 'm4v'].includes(ext);
+            const isAudio = mimeType.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'm4a', 'flac'].includes(ext);
+
+            if (isImage) {
                 const img = document.createElement('img');
-                img.src = blobUrl;
+                img.src = mediaUrl;
+                img.onerror = () => {
+                    switchView('error');
+                    errorMessage.textContent = 'Image failed to render. File may not exist.';
+                };
                 mediaContainer.appendChild(img);
                 customPlayerWrapper.classList.add('hidden');
-            } else if (mimeType.startsWith('video/')) {
+            } else if (isVideo) {
                 const video = document.createElement('video');
-                video.src = blobUrl;
+                video.src = mediaUrl;
                 video.playsInline = true;
+                video.onerror = () => {
+                    switchView('error');
+                    errorMessage.textContent = 'Video failed to load.';
+                };
                 mediaContainer.appendChild(video);
                 customPlayerWrapper.classList.remove('hidden');
                 setupCustomPlayer(video);
-            } else if (mimeType.startsWith('audio/')) {
+            } else if (isAudio) {
                 const audio = document.createElement('audio');
-                audio.src = blobUrl;
+                audio.src = mediaUrl;
+                audio.onerror = () => {
+                    switchView('error');
+                    errorMessage.textContent = 'Audio failed to load.';
+                };
                 mediaContainer.appendChild(audio);
                 customPlayerWrapper.classList.remove('hidden');
                 setupCustomPlayer(audio);
@@ -508,7 +533,7 @@
                 const fallbackDiv = document.createElement('div');
                 fallbackDiv.style.padding = '40px';
                 fallbackDiv.style.textAlign = 'center';
-                fallbackDiv.innerHTML = `<p style="margin-bottom: 12px; color: var(--text-muted);">Preview not available for file type: ${mimeType || 'unknown'}</p>`;
+                fallbackDiv.innerHTML = `<p style="margin-bottom: 12px; color: var(--text-muted);">Preview not available for this file format. You can download it directly.</p>`;
                 mediaContainer.appendChild(fallbackDiv);
                 customPlayerWrapper.classList.add('hidden');
             }
@@ -535,7 +560,7 @@
 
             playPauseBtn.onclick = () => {
                 if (mediaElement.paused) {
-                    mediaElement.play();
+                    mediaElement.play().catch(err => console.log(err));
                 } else {
                     mediaElement.pause();
                 }
@@ -564,12 +589,14 @@
             progressBarContainer.onclick = (e) => {
                 const rect = progressBarContainer.getBoundingClientRect();
                 const pos = (e.clientX - rect.left) / rect.width;
-                mediaElement.currentTime = pos * mediaElement.duration;
+                if(mediaElement.duration) {
+                    mediaElement.currentTime = pos * mediaElement.duration;
+                }
             };
 
             volumeSlider.oninput = (e) => {
                 mediaElement.volume = e.target.value;
-                mediaElement.muted = e.target.value === 0;
+                mediaElement.muted = e.target.value == 0;
             };
 
             muteBtn.onclick = () => {
